@@ -1,0 +1,144 @@
+.dashboard {
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header-text h1 {
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.dashboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 360px;
+  min-width: 240px;
+}
+
+.dashboard-search-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.dashboard-search-input {
+  padding-left: 2.25rem;
+  padding-right: 2rem;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.dashboard-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dashboard-search-clear:hover {
+  color: var(--text);
+}
+
+.dashboard-sort-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-sort-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.dashboard-sort-select {
+  padding-left: 2rem;
+  padding-right: 2rem;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+/* Skeleton Loading styles */
+.board-card-skeleton {
+  min-height: 180px;
+  pointer-events: none;
+}
+
+.skeleton-title {
+  height: 22px;
+  width: 60%;
+  margin-bottom: 1rem;
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 40%;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-progress {
+  height: 8px;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-footer {
+  height: 14px;
+  width: 50%;
+  margin-top: auto;
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dashboard-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-search-wrapper {
+    max-width: 100%;
+  }
+}

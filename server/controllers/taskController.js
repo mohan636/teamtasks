@@ -1,0 +1,286 @@
+const Task = require('../models/Task');
+const { TASK_STATUSES } = require('../models/Task');
+const Board = require('../models/Board');
+const logActivity = require('../utils/logActivity');
+const { canAccessBoard, isValidId } = require('../utils/boardAccess');
+
+const isValidDateString = (dateStr) => {
+  if (!dateStr) return true;
+  const regex = /^(\d{4})-(\d{2})-(\d{2})/;
+  const str = String(dateStr);
+  const match = str.match(regex);
+  if (!match) return false;
+
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day = parseInt(match[3], 10);
+
+  if (year < 1900 || year > 2099) return false;
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
+
+  const dateObj = new Date(year, month - 1, day);
+  return (
+    dateObj.getFullYear() === year &&
+    dateObj.getMonth() === month - 1 &&
+    dateObj.getDate() === day
+  );
+};
+
+// Helper to verify task and board access
+const verifyTaskBoardAccess = async (taskId, userId) => {
+  if (!isValidId(taskId)) return null;
+
+  const task = await Task.findById(taskId);
+  if (!task) return null;
+
+  const board = await Board.findById(task.boardId);
+  if (!board) return null;
+
+  if (!canAccessBoard(board, userId)) return null;
+
+  return { task, board };
+};
+
+// GET /api/boards/:id/tasks - Get all tasks for a board
+exports.getTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ boardId: req.board._id }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: tasks,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch tasks',
+    });
+  }
+};
+
+// POST /api/boards/:id/tasks - Create task on a board
+exports.createTask = async (req, res) => {
+  try {
+    const { title, description, dueDate, status } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Task title is required',
+      });
+    }
+
+    if (status && !TASK_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task status',
+      });
+    }
+
+    let parsedDueDate;
+    if (dueDate) {
+      if (!isValidDateString(dueDate)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid due date',
+        });
+      }
+      parsedDueDate = new Date(dueDate);
+      if (isNaN(parsedDueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid due date',
+        });
+      }
+    }
+
+    const task = await Task.create({
+      boardId: req.board._id,
+      title: title.trim(),
+      description: description?.trim() || '',
+      status: status || 'todo',
+      dueDate: parsedDueDate,
+    });
+
+    await logActivity({
+      boardId: req.board._id,
+      userId: req.user._id,
+      action: 'TASK_CREATED',
+      taskId: task._id,
+      metadata: {
+        taskTitle: task.title,
+        status: task.status,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: task,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create task',
+    });
+  }
+};
+
+// PUT /api/tasks/:id - Update task or status
+exports.updateTask = async (req, res) => {
+  try {
+    const result = await verifyTaskBoardAccess(req.params.id, req.user._id);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found or unauthorized',
+      });
+    }
+
+    const { task, board } = result;
+    const { title, description, dueDate, status } = req.body;
+
+    let isStatusChange = false;
+    let oldStatus = task.status;
+    let otherChanges = false;
+
+    if (title !== undefined) {
+      if (!title.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task title cannot be empty',
+        });
+      }
+      if (task.title !== title.trim()) {
+        task.title = title.trim();
+        otherChanges = true;
+      }
+    }
+
+    if (description !== undefined) {
+      if (task.description !== description.trim()) {
+        task.description = description.trim();
+        otherChanges = true;
+      }
+    }
+
+    if (status !== undefined) {
+      if (!TASK_STATUSES.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid task status',
+        });
+      }
+      if (task.status !== status) {
+        isStatusChange = true;
+        oldStatus = task.status;
+        task.status = status;
+      }
+    }
+
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === '') {
+        if (task.dueDate) {
+          task.dueDate = null;
+          otherChanges = true;
+        }
+      } else {
+        if (!isValidDateString(dueDate)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid due date',
+          });
+        }
+        const parsedDueDate = new Date(dueDate);
+        if (isNaN(parsedDueDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid due date',
+          });
+        }
+        task.dueDate = parsedDueDate;
+        otherChanges = true;
+      }
+    }
+
+    await task.save();
+
+    // Log activity accordingly
+    if (isStatusChange) {
+      await logActivity({
+        boardId: board._id,
+        userId: req.user._id,
+        action: 'TASK_MOVED',
+        taskId: task._id,
+        metadata: {
+          taskTitle: task.title,
+          fromStatus: oldStatus,
+          toStatus: task.status,
+        },
+      });
+    }
+
+    if (otherChanges && !isStatusChange) {
+      await logActivity({
+        boardId: board._id,
+        userId: req.user._id,
+        action: 'TASK_UPDATED',
+        taskId: task._id,
+        metadata: {
+          taskTitle: task.title,
+        },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: task,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update task',
+    });
+  }
+};
+
+// DELETE /api/tasks/:id - Delete task
+exports.deleteTask = async (req, res) => {
+  try {
+    const result = await verifyTaskBoardAccess(req.params.id, req.user._id);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found or unauthorized',
+      });
+    }
+
+    const { task, board } = result;
+    const taskTitle = task.title;
+
+    await Task.deleteOne({ _id: task._id });
+
+    await logActivity({
+      boardId: board._id,
+      userId: req.user._id,
+      action: 'TASK_DELETED',
+      metadata: {
+        taskTitle,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Task deleted',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete task',
+    });
+  }
+};

@@ -1,0 +1,22 @@
+.task-modal {
+  max-width: 520px;
+}
+
+.task-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.task-modal-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.form-label-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}

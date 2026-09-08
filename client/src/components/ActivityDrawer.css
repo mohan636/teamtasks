@@ -1,0 +1,180 @@
+.activity-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.activity-drawer {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.2s ease-out;
+}
+
+.activity-drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.activity-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--text);
+}
+
+.activity-drawer-title h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.activity-drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.activity-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  color: var(--text-dim);
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.activity-empty p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.activity-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+}
+
+.activity-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--border-subtle);
+}
+
+.activity-timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  position: relative;
+}
+
+.activity-icon-container {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.activity-icon.create {
+  color: var(--primary);
+}
+
+.activity-icon.edit {
+  color: var(--warning);
+}
+
+.activity-icon.move {
+  color: var(--todo);
+}
+
+.activity-icon.delete {
+  color: var(--danger);
+}
+
+.activity-icon.invite {
+  color: var(--success);
+}
+
+.activity-icon.default {
+  color: var(--text-muted);
+}
+
+.activity-content {
+  flex: 1;
+  padding-top: 0.125rem;
+}
+
+.activity-text {
+  font-size: 0.8125rem;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.activity-text strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.status-badge-inline {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+
+.status-badge-inline.todo {
+  background: var(--todo-light);
+  color: var(--todo);
+}
+
+.status-badge-inline.in-progress {
+  background: var(--in-progress-light);
+  color: var(--in-progress);
+}
+
+.status-badge-inline.done {
+  background: var(--done-light);
+  color: var(--done);
+}
+
+.activity-time {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

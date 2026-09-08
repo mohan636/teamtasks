@@ -1,0 +1,121 @@
+.task-column {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  min-height: 420px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  min-width: 280px;
+}
+
+.task-column--drag-over {
+  border-color: var(--primary);
+  background: var(--surface-hover);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.task-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-column-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-column-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.task-column-dot.todo {
+  background: var(--todo);
+  box-shadow: 0 0 0 2px var(--todo-light);
+}
+
+.task-column-dot.in-progress {
+  background: var(--in-progress);
+  box-shadow: 0 0 0 2px var(--in-progress-light);
+}
+
+.task-column-dot.done {
+  background: var(--done);
+  box-shadow: 0 0 0 2px var(--done-light);
+}
+
+.task-column-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.task-column-count {
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+}
+
+.task-column-add-btn {
+  color: var(--text-dim);
+  padding: 0.25rem;
+}
+
+.task-column-add-btn:hover {
+  color: var(--text);
+}
+
+.task-column-body {
+  padding: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.task-column-empty {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: var(--text-dim);
+}
+
+.task-column-empty p {
+  font-size: 0.8125rem;
+}
+
+.task-column-empty-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.task-column-empty-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
