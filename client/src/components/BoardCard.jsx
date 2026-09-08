@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MoreVertical, Edit2, Trash2, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { timeAgo } from '../utils/dateUtils';
 import './BoardCard.css';
@@ -15,6 +15,7 @@ const getInitials = (name) => {
 };
 
 const BoardCard = ({ board, onRename, onDeleteClick }) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(board.title);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -64,8 +65,30 @@ const BoardCard = ({ board, onRename, onDeleteClick }) => {
     }
   };
 
+  const handleCardClick = (e) => {
+    if (isEditing) return;
+    if (
+      e.target.closest('.board-card-menu-container') ||
+      e.target.closest('button') ||
+      e.target.closest('input')
+    ) {
+      return;
+    }
+    navigate(`/boards/${board._id}`);
+  };
+
   return (
-    <div className="board-card">
+    <div
+      className="board-card"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !isEditing && !menuOpen && e.target === e.currentTarget) {
+          navigate(`/boards/${board._id}`);
+        }
+      }}
+    >
       <div className="board-card-top">
         <div className="board-card-title-container">
           {isEditing ? (
@@ -75,12 +98,11 @@ const BoardCard = ({ board, onRename, onDeleteClick }) => {
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleSave}
               onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
               autoFocus
             />
           ) : (
-            <Link to={`/boards/${board._id}`} className="board-card-title-link">
-              <h3 className="board-card-title">{board.title}</h3>
-            </Link>
+            <h3 className="board-card-title">{board.title}</h3>
           )}
         </div>
 

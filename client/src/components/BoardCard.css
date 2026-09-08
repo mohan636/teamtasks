@@ -9,12 +9,17 @@
   transition: all 0.2s ease;
   position: relative;
   min-height: 180px;
+  cursor: pointer;
 }
 
 .board-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--border-focus);
   transform: translateY(-2px);
+}
+
+.board-card:hover .board-card-title {
+  color: var(--primary);
 }
 
 .board-card-top {
@@ -29,21 +34,12 @@
   flex: 1;
 }
 
-.board-card-title-link {
-  text-decoration: none;
-  color: inherit;
-}
-
 .board-card-title {
   font-size: 1.0625rem;
   font-weight: 600;
   color: var(--text);
   line-height: 1.35;
   transition: color 0.15s ease;
-}
-
-.board-card-title-link:hover .board-card-title {
-  color: var(--primary);
 }
 
 .board-card-title-input {
