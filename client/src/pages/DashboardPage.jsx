@@ -117,13 +117,15 @@ const DashboardPage = () => {
             <h1>My Boards</h1>
             <p className="dashboard-subtitle">Manage your projects and tasks</p>
           </div>
-          <button
-            className="btn-primary"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <Plus size={16} />
-            <span>New Board</span>
-          </button>
+          {!loading && boards.length > 0 && (
+            <button
+              className="btn-primary"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={16} />
+              <span>New Board</span>
+            </button>
+          )}
         </div>
 
         {/* Search and Filter Toolbar */}
