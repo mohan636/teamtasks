@@ -73,28 +73,33 @@ exports.createTask = async (req, res) => {
       });
     }
 
+    if (!dueDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Due date is required',
+      });
+    }
+
+    if (!isValidDateString(dueDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid due date',
+      });
+    }
+
+    const parsedDueDate = new Date(dueDate);
+    if (isNaN(parsedDueDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid due date',
+      });
+    }
+
     if (status && !TASK_STATUSES.includes(status)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid task status',
       });
-    }
-
-    let parsedDueDate;
-    if (dueDate) {
-      if (!isValidDateString(dueDate)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid due date',
-        });
-      }
-      parsedDueDate = new Date(dueDate);
-      if (isNaN(parsedDueDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid due date',
-        });
-      }
     }
 
     const task = await Task.create({
@@ -182,25 +187,26 @@ exports.updateTask = async (req, res) => {
     }
 
     if (dueDate !== undefined) {
-      if (dueDate === null || dueDate === '') {
-        if (task.dueDate) {
-          task.dueDate = null;
-          otherChanges = true;
-        }
-      } else {
-        if (!isValidDateString(dueDate)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid due date',
-          });
-        }
-        const parsedDueDate = new Date(dueDate);
-        if (isNaN(parsedDueDate.getTime())) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid due date',
-          });
-        }
+      if (!dueDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Due date is required',
+        });
+      }
+      if (!isValidDateString(dueDate)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid due date',
+        });
+      }
+      const parsedDueDate = new Date(dueDate);
+      if (isNaN(parsedDueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid due date',
+        });
+      }
+      if (!task.dueDate || new Date(task.dueDate).getTime() !== parsedDueDate.getTime()) {
         task.dueDate = parsedDueDate;
         otherChanges = true;
       }

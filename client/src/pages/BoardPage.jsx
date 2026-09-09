@@ -299,10 +299,10 @@ const BoardPage = () => {
     }
   };
 
-  // Quick Add Task for specific column
-  const handleQuickAddTask = (status) => {
+  // Quick Add Task
+  const handleQuickAddTask = () => {
     setEditingTask(null);
-    setModalInitialStatus(status);
+    setModalInitialStatus('todo');
     setTaskModalOpen(true);
   };
 

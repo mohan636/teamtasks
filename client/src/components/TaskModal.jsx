@@ -76,10 +76,12 @@ const TaskModal = ({
   const handleDateChange = (e) => {
     const val = e.target.value;
     setDueDate(val);
-    if (val && !isValidDueDate(val)) {
-      setError('Please enter a valid due date.');
-    } else if (error === 'Please enter a valid due date.') {
-      setError('');
+    if (val) {
+      if (!isValidDueDate(val)) {
+        setError('Please enter a valid due date.');
+      } else if (error === 'Please enter a valid due date.' || error === 'Due date is required') {
+        setError('');
+      }
     }
   };
 
@@ -89,7 +91,11 @@ const TaskModal = ({
       setError('Task title is required');
       return;
     }
-    if (dueDate && !isValidDueDate(dueDate)) {
+    if (!dueDate) {
+      setError('Due date is required');
+      return;
+    }
+    if (!isValidDueDate(dueDate)) {
       setError('Please enter a valid due date.');
       return;
     }
@@ -97,8 +103,8 @@ const TaskModal = ({
     onSave({
       title: title.trim(),
       description: description.trim(),
-      dueDate: dueDate || undefined,
-      status,
+      dueDate: dueDate,
+      status: task ? status : 'todo',
     });
   };
 
@@ -133,7 +139,12 @@ const TaskModal = ({
             <input
               id="task-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (error === 'Task title is required' && e.target.value.trim()) {
+                  setError('');
+                }
+              }}
               placeholder="What needs to be done?"
               autoFocus
               required
@@ -155,7 +166,47 @@ const TaskModal = ({
             />
           </div>
 
-          <div className="form-row">
+          {task ? (
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="task-due-date">
+                  <span className="form-label-with-icon">
+                    <Calendar size={13} />
+                    Due Date
+                  </span>
+                </label>
+                <input
+                  id="task-due-date"
+                  type="date"
+                  min="1900-01-01"
+                  max="2099-12-31"
+                  value={dueDate}
+                  onChange={handleDateChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="task-status">
+                  <span className="form-label-with-icon">
+                    <CheckSquare size={13} />
+                    Status
+                  </span>
+                </label>
+                <select
+                  id="task-status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : (
             <div className="form-group">
               <label htmlFor="task-due-date">
                 <span className="form-label-with-icon">
@@ -170,29 +221,10 @@ const TaskModal = ({
                 max="2099-12-31"
                 value={dueDate}
                 onChange={handleDateChange}
+                required
               />
             </div>
-
-            <div className="form-group">
-              <label htmlFor="task-status">
-                <span className="form-label-with-icon">
-                  <CheckSquare size={13} />
-                  Status
-                </span>
-              </label>
-              <select
-                id="task-status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          )}
 
           <div className="modal-actions">
             <button

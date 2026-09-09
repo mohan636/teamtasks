@@ -52,14 +52,16 @@ const TaskColumn = ({
           <h3 className="task-column-title">{config.label}</h3>
           <span className="task-column-count">{tasks.length}</span>
         </div>
-        <button
-          className="btn-ghost btn-icon task-column-add-btn"
-          onClick={() => onQuickAddTask(status)}
-          title={`Add task to ${config.label}`}
-          aria-label={`Add task to ${config.label}`}
-        >
-          <Plus size={16} />
-        </button>
+        {status === 'todo' && onQuickAddTask && (
+          <button
+            className="btn-ghost btn-icon task-column-add-btn"
+            onClick={() => onQuickAddTask(status)}
+            title={`Add task to ${config.label}`}
+            aria-label={`Add task to ${config.label}`}
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       <div className="task-column-body">
@@ -67,13 +69,15 @@ const TaskColumn = ({
           {tasks.length === 0 ? (
             <div className="task-column-empty">
               <p>No tasks</p>
-              <button
-                className="task-column-empty-add"
-                onClick={() => onQuickAddTask(status)}
-              >
-                <Plus size={14} />
-                <span>Add task</span>
-              </button>
+              {status === 'todo' && onQuickAddTask && (
+                <button
+                  className="task-column-empty-add"
+                  onClick={() => onQuickAddTask(status)}
+                >
+                  <Plus size={14} />
+                  <span>Add task</span>
+                </button>
+              )}
             </div>
           ) : (
             tasks.map((task) => (
