@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -9,6 +9,7 @@ import {
   useSensors,
   closestCorners,
 } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import {
   ArrowLeft,
   Plus,
@@ -87,6 +88,8 @@ const BoardPage = () => {
 
   // Drag & drop state
   const [activeTask, setActiveTask] = useState(null);
+  const dragSourceStatusRef = useRef(null);
+  const prevTasksSnapshotRef = useRef(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -199,6 +202,8 @@ const BoardPage = () => {
     const task = tasks.find((t) => t._id === active.id);
     if (task) {
       setActiveTask(task);
+      dragSourceStatusRef.current = task.status;
+      prevTasksSnapshotRef.current = [...tasks];
     }
   };
 
@@ -209,9 +214,10 @@ const BoardPage = () => {
     const activeId = active.id;
     const overId = over.id;
 
-    // Find task being dragged
-    const activeItem = tasks.find((t) => t._id === activeId);
-    if (!activeItem) return;
+    if (activeId === overId) return;
+
+    const activeTaskItem = tasks.find((t) => t._id === activeId);
+    if (!activeTaskItem) return;
 
     // Determine target status
     let targetStatus = null;
@@ -224,79 +230,120 @@ const BoardPage = () => {
       }
     }
 
-    if (targetStatus && activeItem.status !== targetStatus) {
-      setTasks((prevTasks) =>
-        prevTasks.map((t) =>
-          t._id === activeId ? { ...t, status: targetStatus } : t
-        )
-      );
+    if (!targetStatus) return;
+
+    if (activeTaskItem.status !== targetStatus) {
+      setTasks((prev) => {
+        const activeIndex = prev.findIndex((t) => t._id === activeId);
+        const overIndex = prev.findIndex((t) => t._id === overId);
+
+        let newIndex;
+        if (STATUS_ORDER.includes(overId)) {
+          newIndex = prev.length;
+        } else {
+          newIndex = overIndex >= 0 ? overIndex : prev.length;
+        }
+
+        const updated = [...prev];
+        const item = { ...updated[activeIndex], status: targetStatus };
+        updated.splice(activeIndex, 1);
+        updated.splice(newIndex, 0, item);
+        return updated;
+      });
     }
   };
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    setActiveTask(null);
+    const snapshot = prevTasksSnapshotRef.current;
+    const sourceStatus = dragSourceStatusRef.current;
 
-    const activeId = active.id;
-    const originalStatus = active.data.current?.task?.status;
+    setActiveTask(null);
+    dragSourceStatusRef.current = null;
+    prevTasksSnapshotRef.current = null;
 
     if (!over) {
-      if (originalStatus) {
-        setTasks((prev) =>
-          prev.map((t) => (t._id === activeId ? { ...t, status: originalStatus } : t))
-        );
+      if (snapshot) {
+        setTasks(snapshot);
       }
       return;
     }
 
+    const activeId = active.id;
     const overId = over.id;
-    const currentTask = tasks.find((t) => t._id === activeId);
-    if (!currentTask) return;
 
-    let targetStatus = currentTask.status;
+    const activeIndex = tasks.findIndex((t) => t._id === activeId);
+    if (activeIndex === -1) return;
 
+    // Determine target status
+    let targetStatus = null;
     if (STATUS_ORDER.includes(overId)) {
       targetStatus = overId;
     } else {
-      const overItem = tasks.find((t) => t._id === overId);
-      if (overItem) {
-        targetStatus = overItem.status;
+      const overTask = tasks.find((t) => t._id === overId);
+      targetStatus = overTask ? overTask.status : tasks[activeIndex]?.status;
+    }
+
+    let updatedTasks = [...tasks];
+
+    // If dropped over another task, reorder tasks in the array
+    if (!STATUS_ORDER.includes(overId)) {
+      const overIndex = tasks.findIndex((t) => t._id === overId);
+      if (overIndex !== -1 && activeIndex !== overIndex) {
+        updatedTasks = arrayMove(updatedTasks, activeIndex, overIndex);
       }
     }
 
-    if (originalStatus && originalStatus !== targetStatus) {
-      // Optimistically update
-      setTasks((prev) =>
-        prev.map((t) => (t._id === activeId ? { ...t, status: targetStatus } : t))
-      );
+    // Ensure status is updated on the moved item
+    updatedTasks = updatedTasks.map((t) =>
+      t._id === activeId ? { ...t, status: targetStatus } : t
+    );
 
-      try {
-        await axiosClient.put(`/tasks/${activeId}`, { status: targetStatus });
+    // Calculate sequential positions per column
+    const columnCounters = { todo: 0, 'in-progress': 0, done: 0 };
+    updatedTasks = updatedTasks.map((t) => {
+      const currentPos = columnCounters[t.status] || 0;
+      columnCounters[t.status] = currentPos + 1;
+      return {
+        ...t,
+        position: currentPos,
+      };
+    });
+
+    // Optimistically update React state
+    setTasks(updatedTasks);
+
+    const hasStatusChanged = sourceStatus && sourceStatus !== targetStatus;
+
+    try {
+      // Persist full column order and statuses in MongoDB
+      await axiosClient.put(`/boards/${id}/tasks/reorder`, {
+        tasks: updatedTasks.map((t) => ({
+          _id: t._id,
+          status: t.status,
+          position: t.position,
+        })),
+      });
+
+      if (hasStatusChanged) {
         toast.success(`Task moved to ${STATUS_LABELS[targetStatus] || targetStatus}`);
-      } catch (err) {
-        // Rollback state on error
-        setTasks((prev) =>
-          prev.map((t) => (t._id === activeId ? { ...t, status: originalStatus } : t))
-        );
-        toast.error(err.response?.data?.message || 'Failed to move task');
       }
-    } else if (originalStatus && originalStatus === targetStatus) {
-      setTasks((prev) =>
-        prev.map((t) => (t._id === activeId ? { ...t, status: originalStatus } : t))
-      );
+    } catch (err) {
+      // Rollback on error
+      if (snapshot) {
+        setTasks(snapshot);
+      }
+      toast.error(err.response?.data?.message || 'Failed to save task order');
     }
   };
 
-  const handleDragCancel = (event) => {
-    const { active } = event;
+  const handleDragCancel = () => {
     setActiveTask(null);
-    const activeId = active?.id;
-    const originalStatus = active?.data?.current?.task?.status;
-    if (activeId && originalStatus) {
-      setTasks((prev) =>
-        prev.map((t) => (t._id === activeId ? { ...t, status: originalStatus } : t))
-      );
+    if (prevTasksSnapshotRef.current) {
+      setTasks(prevTasksSnapshotRef.current);
     }
+    dragSourceStatusRef.current = null;
+    prevTasksSnapshotRef.current = null;
   };
 
   // Quick Add Task

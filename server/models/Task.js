@@ -28,6 +28,10 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Due date is required'],
     },
+    position: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

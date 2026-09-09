@@ -13,7 +13,7 @@ const {
   verifyBoardAccess,
   verifyBoardOwner,
 } = require('../controllers/boardController');
-const { getTasks, createTask } = require('../controllers/taskController');
+const { getTasks, createTask, reorderTasks } = require('../controllers/taskController');
 
 const router = express.Router();
 
@@ -29,6 +29,7 @@ router.delete('/:id', verifyBoardOwner, deleteBoard);
 // Task routes for board
 router.get('/:id/tasks', verifyBoardAccess, getTasks);
 router.post('/:id/tasks', verifyBoardAccess, createTask);
+router.put('/:id/tasks/reorder', verifyBoardAccess, reorderTasks);
 
 // Member management
 router.get('/:id/members', verifyBoardAccess, getMembers);

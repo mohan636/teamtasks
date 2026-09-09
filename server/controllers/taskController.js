@@ -46,6 +46,7 @@ const verifyTaskBoardAccess = async (taskId, userId) => {
 exports.getTasks = async (req, res) => {
   try {
     const tasks = await Task.find({ boardId: req.board._id }).sort({
+      position: 1,
       createdAt: -1,
     });
 
@@ -102,12 +103,25 @@ exports.createTask = async (req, res) => {
       });
     }
 
+    // Place newly created tasks at the top of the column
+    const targetStatus = status || 'todo';
+    const topTask = await Task.findOne({
+      boardId: req.board._id,
+      status: targetStatus,
+    }).sort({ position: 1 });
+
+    const position =
+      topTask && typeof topTask.position === 'number'
+        ? topTask.position - 1
+        : 0;
+
     const task = await Task.create({
       boardId: req.board._id,
       title: title.trim(),
       description: description?.trim() || '',
-      status: status || 'todo',
+      status: targetStatus,
       dueDate: parsedDueDate,
+      position,
     });
 
     await logActivity({
@@ -133,6 +147,46 @@ exports.createTask = async (req, res) => {
   }
 };
 
+// PUT /api/boards/:id/tasks/reorder - Reorder multiple tasks on a board
+exports.reorderTasks = async (req, res) => {
+  try {
+    const { tasks } = req.body;
+
+    if (!Array.isArray(tasks)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tasks list is required',
+      });
+    }
+
+    const bulkOps = tasks.map((t, idx) => ({
+      updateOne: {
+        filter: { _id: t._id, boardId: req.board._id },
+        update: {
+          $set: {
+            ...(t.status ? { status: t.status } : {}),
+            position: typeof t.position === 'number' ? t.position : idx,
+          },
+        },
+      },
+    }));
+
+    if (bulkOps.length > 0) {
+      await Task.bulkWrite(bulkOps);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Tasks reordered successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reorder tasks',
+    });
+  }
+};
+
 // PUT /api/tasks/:id - Update task or status
 exports.updateTask = async (req, res) => {
   try {
@@ -146,7 +200,7 @@ exports.updateTask = async (req, res) => {
     }
 
     const { task, board } = result;
-    const { title, description, dueDate, status } = req.body;
+    const { title, description, dueDate, status, position } = req.body;
 
     let isStatusChange = false;
     let oldStatus = task.status;
@@ -208,6 +262,13 @@ exports.updateTask = async (req, res) => {
       }
       if (!task.dueDate || new Date(task.dueDate).getTime() !== parsedDueDate.getTime()) {
         task.dueDate = parsedDueDate;
+        otherChanges = true;
+      }
+    }
+
+    if (position !== undefined && typeof position === 'number') {
+      if (task.position !== position) {
+        task.position = position;
         otherChanges = true;
       }
     }
