@@ -78,7 +78,7 @@ const formatActivityText = (item) => {
         icon: <UserPlus size={15} className="activity-icon invite" />,
         text: (
           <span>
-            <strong>{actor}</strong> invited <strong>{meta.invitedUserName || meta.invitedUserEmail}</strong>
+            <strong>{actor}</strong> added <strong>{meta.invitedUserName || meta.invitedUserEmail}</strong> as a member
           </span>
         ),
       };

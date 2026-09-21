@@ -17,8 +17,8 @@ const getInitials = (name) => {
 const MemberModal = ({ isOpen, onClose, boardId, isOwner, onMemberUpdated }) => {
   const [membersData, setMembersData] = useState({ owner: null, members: [] });
   const [loading, setLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviting, setInviting] = useState(false);
+  const [memberEmail, setMemberEmail] = useState('');
+  const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState(null);
 
   const fetchMembers = async () => {
@@ -36,30 +36,30 @@ const MemberModal = ({ isOpen, onClose, boardId, isOwner, onMemberUpdated }) => 
   useEffect(() => {
     if (isOpen && boardId) {
       fetchMembers();
-      setInviteEmail('');
+      setMemberEmail('');
     }
   }, [isOpen, boardId]);
 
-  const handleInvite = async (e) => {
+  const handleAddMember = async (e) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) {
+    if (!memberEmail.trim()) {
       toast.error('Please enter an email address');
       return;
     }
 
-    setInviting(true);
+    setAdding(true);
     try {
       const { data } = await axiosClient.post(`/boards/${boardId}/members`, {
-        email: inviteEmail.trim(),
+        email: memberEmail.trim(),
       });
       setMembersData(data.data);
-      setInviteEmail('');
-      toast.success('Invitation sent successfully');
+      setMemberEmail('');
+      toast.success('Member added successfully');
       if (onMemberUpdated) onMemberUpdated();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to invite member');
+      toast.error(err.response?.data?.message || 'Failed to add member');
     } finally {
-      setInviting(false);
+      setAdding(false);
     }
   };
 
@@ -145,24 +145,24 @@ const MemberModal = ({ isOpen, onClose, boardId, isOwner, onMemberUpdated }) => 
             </div>
           )}
 
-          {/* Invite Section (Owner only or all users depending on role) */}
+          {/* Add Member Section (Owner only) */}
           {isOwner && (
             <div className="member-invite-section">
-              <h3>Invite people</h3>
+              <h3>Add Member</h3>
               <p className="member-invite-hint">
                 Add existing TeamTasks users by email to collaborate on this board.
               </p>
-              <form onSubmit={handleInvite} className="member-invite-form">
+              <form onSubmit={handleAddMember} className="member-invite-form">
                 <input
                   type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  value={memberEmail}
+                  onChange={(e) => setMemberEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
                 />
-                <button type="submit" className="btn-primary" disabled={inviting}>
+                <button type="submit" className="btn-primary" disabled={adding}>
                   <UserPlus size={15} />
-                  <span>{inviting ? 'Inviting...' : 'Send invitation'}</span>
+                  <span>{adding ? 'Adding...' : 'Add Member'}</span>
                 </button>
               </form>
             </div>

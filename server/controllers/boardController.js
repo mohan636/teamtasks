@@ -380,7 +380,7 @@ exports.inviteMember = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to invite member',
+      message: 'Failed to add member',
     });
   }
 };

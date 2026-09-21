@@ -506,8 +506,8 @@ const BoardPage = () => {
               )}
               <button
                 className="btn-ghost btn-icon board-invite-btn"
-                aria-label="Invite member"
-                title="Invite people"
+                aria-label="Manage board members"
+                title="Manage board members"
               >
                 <Users size={16} />
               </button>
